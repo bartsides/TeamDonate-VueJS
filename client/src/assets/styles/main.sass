@@ -1,0 +1,27 @@
+// overwrite bootstrap colors
+@import variables
+@import ../../../node_modules/bootstrap/scss/bootstrap
+
+// import fonts
+@import url('https://fonts.googleapis.com/css2?family=Lato&family=Lobster&display=swap')
+
+body 
+  margin: 0
+  -webkit-font-smoothing: antialiased
+  -moz-osx-font-smoothing: grayscale
+
+.btn
+  font-weight: bold
+
+.btn-primary, .btn-primary:hover, .btn-secondary, .btn-secondary:hover
+  border: 1px solid $dark
+
+blockquote
+  border-left: 4px solid $secondary !important
+  padding-top: 10px
+  padding-bottom: 1px
+  padding-right: 6px
+  box-shadow: 6px 6px 6px 0px $primary
+  
+a
+  color: $blue
