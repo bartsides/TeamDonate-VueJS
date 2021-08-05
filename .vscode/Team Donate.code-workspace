@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "path": "../client"
+    },
+    {
+      "path": "../Azure Public"
+    },
+    {
+      "path": "../Azure Auth"
+    }
+  ],
+  "settings": {
+    "debug.internalConsoleOptions": "neverOpen"
+  }
+}

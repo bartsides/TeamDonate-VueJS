@@ -1,0 +1,12 @@
+{
+  "azureFunctions.deploySubpath": "Azure Public",
+  "azureFunctions.projectLanguage": "JavaScript",
+  "azureFunctions.projectRuntime": "~3",
+  "debug.internalConsoleOptions": "neverOpen",
+  "azureFunctions.preDeployTask": "npm prune",
+  "azureFunctions.postDeployTask": "npm install",
+  "eslint.workingDirectories": [
+	"./client"
+  ],
+  "azureFunctions.projectSubpath": "Azure"
+}
