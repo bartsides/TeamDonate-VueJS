@@ -9,6 +9,14 @@ namespace TeamDonate
 {
     public static class Extensions
     {
+        public static async Task<JObject> GetItemAsync(this Container container, string id, PartitionKey partitionKey,
+                ItemRequestOptions requestOptions = null) {
+            var data = await container.ReadItemStreamAsync(id, partitionKey, requestOptions);
+            if (data?.Content == null) return null;
+
+            return JObject.Parse(data.Content.GetBody());
+        }
+
         public static JToken GetResults(this FeedIterator iterator)
         {
             using var res = iterator.ReadNextAsync().ConfigureAwait(false).GetAwaiter().GetResult();

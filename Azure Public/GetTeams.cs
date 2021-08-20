@@ -4,9 +4,6 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using System.IO;
-using System.Threading.Tasks;
-using System;
 
 namespace TeamDonate
 {
@@ -14,13 +11,13 @@ namespace TeamDonate
     {
         [FunctionName("GetTeams")]
         public static IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "GetTeams/{pk}")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "GetTeams/{eventid}")] HttpRequest req,
             ILogger log,
             [CosmosDB(
                 databaseName: "TeamDonate",
                 collectionName: "Teams",
                 ConnectionStringSetting = "CosmosDb",
-                PartitionKey = "{pk}"
+                SqlQuery = "SELECT * FROM c WHERE c.eventid = {eventid}"
             )] JArray teams)
         {
             return new OkObjectResult(teams.ToString());

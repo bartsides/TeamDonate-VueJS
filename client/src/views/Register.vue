@@ -21,7 +21,7 @@
             label="Event"
             class="col-12"
             :options="events"
-            v-model="data.event"
+            v-model="event"
             rules="required"
           />
           <Dropdown
@@ -29,27 +29,36 @@
             label="Charity"
             class="col-12"
             :options="organizations"
-            v-model="data.organization"
+            v-model="organization"
             rules="required"
           />
           <div class="col-12 mt-5">
             <Slider
               v-model="type"
-              :options="['Walk with an existing team', 'Register a team']"
+              :options="['Join a team', 'Register a team']"
             />
           </div>
           <div class="col-12" v-if="type === 'Register a team'">
             <TextInput
-              name="name"
+              name="teamName"
               label="Team Name"
-              v-model="data.name"
+              v-model="teamName"
+              rules="required"
+            />
+          </div>
+          <div class="col-12" v-else>
+            <Dropdown 
+              name="team"
+              label="Team"
+              :options="teamsList"
+              v-model="team"
               rules="required"
             />
           </div>
         </div>
 
         <button class="btn btn-primary btn-lg float-right mt-5">
-          Register
+          {{ type === 'Register a team' ? 'Register' : 'Join' }}
         </button>
       </form>
     </div>
@@ -65,13 +74,24 @@ export default {
   components: { ValidationObserver, Dropdown, TextInput, Slider },
   data() {
     return {
-      data: {},
-      type: 'Walk with an existing team',
+      event: null,
+      organization: null,
+      teamName: '',
+      type: 'Join a team',
+      team: null,
       teams: [],
     };
   },
   computed: {
-    ...mapGetters(['organizations', 'events', 'profile']),
+    ...mapGetters(['organizations', 'events', 'profile']),    
+    teamsList() {
+      if (!this.teams) return [];
+      if (!this.organization) return this.teams;
+      return this.teams.filter(team => 
+        team.organizationid == this.organization.id &&
+        team.members && team.members.every(m => m.id != this.profile.id)
+      );
+    }
   },
   methods: {
     ...mapActions([
@@ -79,68 +99,94 @@ export default {
       'getOrganizations',
       'getTeams',
       'registerTeam',
+      'joinTeam'
     ]),
     submit() {
       const user = { id: this.profile.id, name: this.profile.name };
-      if (this.type === 'Team') {
-        // Register team
-        const data = {
-          ...this.data,
-          id: this.$newid(),
-          eventid: this.data.event.id,
-          event: this.data.event.name,
-          date: this.data.event.date,
-          organizationid: this.data.organization.id,
-          organization: this.data.organization.name,
-          owner: user,
-          members: [user],
-        };
-
-        this.registerTeam(data).then((res) => {
-          if (res) {
-            // TODO redirect to team page with invite
-            this.$toast.success(
-              `${this.data.name} is registered for ${this.data.event.name}!`
-            );
-          } else {
-            this.$toast.error('An error occurred. Try again in a bit.');
-          }
-        });
+      if (this.type === 'Register a team') {
+        this.registerNewTeam(user);
       } else {
-        // Register walker to team
+        this.registerToTeam(user);
       }
     },
+    registerToTeam(user) {
+      this.joinTeam({
+        teamId: this.team.id,
+        teamPk: this.team.eventid,
+        user
+      }).then((res) => {
+        if (res) {
+          // TODO redirect to team page
+          this.$toast.success(`You've joined ${this.team.name}!`);
+        }
+        else {
+          this.$toast.error('An error occurred. Try again in a bit.');
+        }
+      });
+    },
+    registerNewTeam(user) {
+      // Register team
+      const data = {
+        id: this.$newid(),
+        name: this.teamName,
+        eventid: this.event.id,
+        event: this.event.name,
+        date: this.event.date,
+        organizationid: this.organization.id,
+        organization: this.organization.name,
+        owner: user,
+        members: [user],
+      };
+
+      this.registerTeam(data).then((res) => {
+        if (res) {
+          // TODO redirect to team page with invite
+          this.$toast.success(
+            `${this.teamName} is registered for ${this.event.name}!`
+          );
+        } else {
+          this.$toast.error('An error occurred. Try again in a bit.');
+        }
+      });
+    },
     getTeamsByEvent() {
-      if (!this.data || !this.data.event) {
+      if (!this.event) {
         this.teams = [];
         return;
       }
-      this.getTeams(this.data.event.id).then((res) => {
+      this.getTeams(this.event.id).then((res) => {
         this.teams = res;
       });
     },
   },
   mounted() {
-    if (!this.event || !this.events.length) this.getEvents();
-    if (!this.organizations || !this.organizations.length)
-      this.getOrganizations();
+    if (!this.events || !this.events.length) {
+      this.getEvents().then(() => {
+        if (this.events && this.events.length)
+          this.event = this.events[0];        
+      });
+    }
+    else {
+      this.event = events[0];
+    }
+
+    if (!this.organizations || !this.organizations.length) {
+      this.getOrganizations().then(() => {
+        if (this.organizations && this.organizations.length)
+          this.organization = this.organizations[0];
+      });
+    }
+    else {
+      this.organization = this.organizations[0];
+    }
   },
   watch: {
-    data: {
+    event: {
       deep: true,
-      handler(val, oldVal) {
-        console.log('log', val, oldVal);
-        // TODO enhance this
-        // Get teams if event changed
-        if (
-          val &&
-          val.event &&
-          (!oldVal || !oldVal.event || val.event.id !== oldVal.event.id)
-        ) {
-          this.getTeamsByEvent();
-        }
-      },
-    },
+      handler() {
+        this.getTeamsByEvent();
+      }
+    }
   },
 };
 </script>

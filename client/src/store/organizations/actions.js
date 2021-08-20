@@ -8,7 +8,7 @@ export default {
     });
   },
   getOrganizations({ commit }) {
-    organizationService.getOrganizations().then((res) => {
+    return organizationService.getOrganizations().then((res) => {
       commit('storeOrganizations', res && res.data ? res.data : []);
     });
   },

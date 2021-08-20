@@ -2,8 +2,8 @@ import httpClient from './httpClient';
 import publicHttpClient from './publicHttpClient';
 
 export default {
-  getTeam(id) {
-    return publicHttpClient.get(`GetTeam/${id}`, {
+  getTeam(eventid, teamid) {
+    return publicHttpClient.get(`GetTeam/${eventid}/${teamid}`, {
       headers: { 'x-functions-key': process.env.VUE_APP_GET_TEAM },
     });
   },
@@ -17,4 +17,9 @@ export default {
       headers: { 'x-functions-key': process.env.VUE_APP_CREATE_TEAM },
     });
   },
+  joinTeam({teamId, teamPk, user}) {
+    return httpClient.post(`JoinTeam/${teamPk}/${teamId}`, user, {
+      headers: { 'x-functions-key': process.env.VUE_APP_JOIN_TEAM}
+    });
+  }
 };

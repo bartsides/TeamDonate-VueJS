@@ -19,28 +19,28 @@ namespace TeamDonate
             ILogger log,
             ClaimsPrincipal claimsPrincipal,
             [CosmosDB(
-                  databaseName: "TeamDonate",
-                  collectionName: "Organizations",
-                  ConnectionStringSetting = "CosmosDb",
-                  Id = "{id}",
-                  PartitionKey = "{id}"
-              )] JObject oldOrganization,
+                databaseName: "TeamDonate",
+                collectionName: "Organizations",
+                ConnectionStringSetting = "CosmosDb",
+                Id = "{id}",
+                PartitionKey = "{id}"
+            )] JObject organizationData,
             [CosmosDB(
-                  databaseName: "TeamDonate",
-                  collectionName: "Organizations",
-                  ConnectionStringSetting = "CosmosDb"
-              )] out object organization)
+                databaseName: "TeamDonate",
+                collectionName: "Organizations",
+                ConnectionStringSetting = "CosmosDb"
+            )] out object organization)
         {
-            if (oldOrganization == null)
-            {
+            var organizationJson = JObject.Parse(req.Body.GetBody());
+            
+            if (!string.Equals(organizationData["id"].ToString(), organizationJson["id"].ToString(), 
+                    StringComparison.CurrentCultureIgnoreCase)) {
                 organization = null;
-                return new NotFoundResult();
+                return new BadRequestObjectResult("Payload id does not match id in route");
             }
 
-            var newOrganization = JObject.Parse(req.Body.GetBody());
-
             var authorized = false;
-            foreach (var admin in oldOrganization["admins"])
+            foreach (var admin in organizationData["admins"])
             {
                 if (string.Equals(admin["id"].ToString(), Helpers.GetId(claimsPrincipal),
                     StringComparison.CurrentCultureIgnoreCase))
@@ -50,19 +50,19 @@ namespace TeamDonate
                 }
             }
 
-            if (!authorized && !Helpers.IsAdmin(claimsPrincipal))
+            if (true || !authorized && !Helpers.IsAdmin(claimsPrincipal))
             {
                 organization = null;
                 return new UnauthorizedResult();
             }
 
-            if (!string.Equals(oldOrganization["name"], newOrganization["name"]))
+            if (!string.Equals(organizationData["name"], organizationJson["name"]))
             {
                 log.LogInformation("Organization changed names. Updating teams");
-                UpdateTeams(newOrganization, log);
+                UpdateTeams(organizationJson, log);
             }
 
-            organization = newOrganization;
+            organization = organizationJson;
             return new OkResult();
         }
 

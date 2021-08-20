@@ -7,7 +7,7 @@ export default {
       .then((res) => (res && res.data ? res.data : null));
   },
   getEvents({ commit }) {
-    eventService.getEvents().then((res) => {
+    return eventService.getEvents().then((res) => {
       commit('storeEvents', res && res.data ? res.data : []);
     });
   },

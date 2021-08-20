@@ -69,6 +69,11 @@ const routes = [
     name: 'Update Profile',
     component: () => import('@/views/Profile/Update.vue'),
   },
+  {
+    path: '/team/:eventid/:id',
+    name: 'Team',
+    component: () => import('@/views/Teams/Team.vue'),
+  }
 ];
 
 const router = new VueRouter({

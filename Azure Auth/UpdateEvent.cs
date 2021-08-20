@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using System;
 
 namespace TeamDonate
@@ -16,25 +17,36 @@ namespace TeamDonate
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "UpdateEvent/{id}")] HttpRequest req,
             ILogger log,
+            ClaimsPrincipal claimsPrincipal,
             [CosmosDB(
                 databaseName: "TeamDonate",
                 collectionName: "Events",
                 ConnectionStringSetting = "CosmosDb",
                 Id = "{id}",
                 PartitionKey = "{id}"
-            )] JObject oldEvent)
+            )] JObject eventData)
         {
+            if (!Helpers.IsAdmin(claimsPrincipal))
+                return new UnauthorizedResult();
+
             var eventJson = JObject.Parse(req.Body.GetBody());
+
+            if (!string.Equals(eventData["id"].ToString(), eventJson["id"].ToString(), 
+                    StringComparison.CurrentCultureIgnoreCase)) {
+                return new BadRequestObjectResult("Payload id does not match id in route");
+            }
 
             // Update event
             var events = await Helpers.GetContainerAsync("Events");
             var eventPk = new PartitionKey(eventJson["id"].ToString());
             var eventRes = await events.UpsertItemStreamAsync(eventJson.ToStream(), eventPk);
-            if (!eventRes.IsSuccessStatusCode) throw new Exception("Failed to update event");
+            
+            if (!eventRes.IsSuccessStatusCode) 
+                throw new Exception("Failed to update event");
 
             // Check if name or date have changed
-            var updateTeams = oldEvent["name"].ToString() != eventJson["name"].ToString() ||
-                oldEvent["date"].ToString() != eventJson["date"].ToString();
+            var updateTeams = eventData["name"].ToString() != eventJson["name"].ToString() ||
+                eventData["date"].ToString() != eventJson["date"].ToString();
             if (updateTeams)
             {
                 log.LogInformation("Event name or date changed. Updating teams");

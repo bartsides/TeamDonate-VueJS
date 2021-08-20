@@ -7,7 +7,6 @@ import money from 'v-money';
 import Maska from 'maska';
 import vSelect from 'vue-select';
 import Toast, { POSITION } from 'vue-toastification';
-import VueLoading from 'vue-loading-overlay';
 import '@/plugins/vee-validate.js';
 import idService from '@/services/idService.js';
 
